@@ -1,0 +1,23 @@
+# Core framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# LangChain + Ollama
+langchain-core>=0.1.40
+langchain-ollama>=0.0.6
+langchain-community>=0.0.29
+langchain-text-splitters>=0.0.1
+langchain-chroma>=0.0.8
+
+# Vector store
+chromadb>=0.4.24
+
+# PDF loading
+pypdf>=4.1.0
+
+# Streamlit frontend
+streamlit>=1.33.0
+requests>=2.31.0
+
+# Data models
+pydantic>=2.6.0

@@ -1,0 +1,4 @@
+"What is the difference between encoder and decoder in the Transformer?" — tests single-doc retrieval
+"How does BERT differ from the original Transformer architecture?" — tests cross-doc reasoning
+"How does RAG work and why is it useful?" — tests if it finds the RAG paper
+"What safety techniques does LLaMA 2 use compared to Constitutional AI?" — tests multi-doc synthesis, which is where memory really shines across turns
