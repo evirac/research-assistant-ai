@@ -7,3 +7,5 @@ __pycache__/
 /docs/*
 /.vscode
 *.pyc
+/Summary.md
+/chat_history.json
