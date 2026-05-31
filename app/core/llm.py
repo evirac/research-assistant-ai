@@ -8,20 +8,89 @@ Root cause of the original bug:
 
 This module replaces OllamaLLM with a thin direct-HTTP wrapper so
 thinking tokens are always captured and never silently dropped.
+
+Model management:
+  Use set_model() / get_model() to switch models at runtime.
+  list_available_models() queries Ollama for all pulled models.
 """
 
 import json
 import requests
-from typing import Generator, Tuple
+from typing import Generator, List, Tuple
 
 OLLAMA_BASE = "http://localhost:11434"
-MODEL       = "gemma4:e2b"
+
+# ── Dynamic model state ───────────────────────────────────────────────────────
+_current_model = "gemma4:e2b"   # default; overridden by set_model()
 
 # Shared options used for every call
 _OPTIONS = {
     "temperature": 0.7,
     "num_predict": 2048,
 }
+
+
+# ─────────────────────────────────────────────────────────────────
+# Model management helpers
+# ─────────────────────────────────────────────────────────────────
+
+def get_model() -> str:
+    """Return the currently active Ollama model name."""
+    return _current_model
+
+
+def set_model(model_name: str) -> None:
+    """
+    Switch the active model for all subsequent calls.
+
+    Args:
+        model_name: Exact Ollama model tag, e.g. "gemma4:12b" or "llama3:8b"
+    """
+    global _current_model
+    _current_model = model_name
+    print(f"[llm] Model switched to: {model_name}")
+
+
+def list_available_models() -> List[str]:
+    """
+    Query Ollama for all locally pulled models.
+
+    Returns a sorted list of model tags (e.g. ["gemma4:12b", "llama3:8b"]).
+    Falls back to [current_model] if Ollama is unreachable.
+    """
+    try:
+        resp = requests.get(f"{OLLAMA_BASE}/api/tags", timeout=5)
+        resp.raise_for_status()
+        models = resp.json().get("models", [])
+        tags = sorted(m["name"] for m in models)
+        return tags if tags else [_current_model]
+    except Exception as e:
+        print(f"[llm] Could not list models from Ollama: {e}")
+        return [_current_model]
+
+
+def get_model_info() -> dict:
+    """
+    Return info about the currently active model.
+    Tries to get parameter size from Ollama model details.
+    """
+    try:
+        resp = requests.post(
+            f"{OLLAMA_BASE}/api/show",
+            json={"name": _current_model},
+            timeout=5,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        details = data.get("details", {})
+        return {
+            "name": _current_model,
+            "parameter_size": details.get("parameter_size", "unknown"),
+            "quantization_level": details.get("quantization_level", "unknown"),
+            "family": details.get("family", "unknown"),
+        }
+    except Exception:
+        return {"name": _current_model, "parameter_size": "unknown"}
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -37,7 +106,7 @@ def ollama_chat(system_prompt: str, user_message: str) -> Tuple[str, str]:
         model decided not to reason (very short / trivial queries).
     """
     payload = {
-        "model":    MODEL,
+        "model":    _current_model,
         "messages": [
             {"role": "system",  "content": system_prompt},
             {"role": "user",    "content": user_message},
@@ -81,7 +150,7 @@ def ollama_chat_stream(
     while simultaneously streaming answer tokens into the chat.
     """
     payload = {
-        "model":    MODEL,
+        "model":    _current_model,
         "messages": [
             {"role": "system",  "content": system_prompt},
             {"role": "user",    "content": user_message},
@@ -145,7 +214,11 @@ def parse_thinking(raw_output: str):
 # ─────────────────────────────────────────────────────────────────
 
 def _test():
-    print("Testing ollama_chat (non-streaming)…")
+    print(f"Available models: {list_available_models()}")
+    print(f"Current model: {get_model()}")
+    print(f"Model info: {get_model_info()}")
+
+    print("\nTesting ollama_chat (non-streaming)…")
     thinking, answer = ollama_chat(
         system_prompt="You are a helpful AI assistant. Answer concisely.",
         user_message="Explain in 2 sentences why transformers outperform RNNs.",
