@@ -163,24 +163,29 @@ def ask_stream(request: QuestionRequest):
             )
 
             # Collect both streams simultaneously
+            thinking_sent   = False  # sentinel emitted at most once
+            thinking_started = False
+            thinking_ended = False
             thinking_chunks = []
             answer_chunks   = []
-            thinking_sent   = False  # sentinel emitted at most once
 
             for tok_type, text in ollama_chat_stream(system_prompt, user_message):
                 if tok_type == "thinking":
+                    if not thinking_started:
+                        yield "<think>\n"
+                        thinking_started = True
                     thinking_chunks.append(text)
-                    # Don't send individual thinking tokens yet —
-                    # wait until the thinking block finishes (answer starts)
+                    yield text
                 else:
-                    # First answer token — flush entire thinking block first
-                    if not thinking_sent and thinking_chunks:
-                        thinking_sent = True
-                        full_thinking = "".join(thinking_chunks)
-                        yield f"||THINKING||{json.dumps(full_thinking)}"
-
+                    if thinking_started and not thinking_ended:
+                        yield "\n</think>\n\n"
+                        thinking_ended = True
                     answer_chunks.append(text)
                     yield text
+
+            # Edge case: ended while still thinking
+            if thinking_started and not thinking_ended:
+                 yield "\n</think>\n\n"
 
             # Edge case: answer was empty but thinking happened (shouldn't occur normally)
             if not thinking_sent and thinking_chunks:

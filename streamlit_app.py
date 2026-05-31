@@ -574,9 +574,13 @@ def render_chat():
                 think_label = f"🧠 Reasoning Chain ({think_time:.1f}s)" if think_time else "🧠 Reasoning Chain"
                 
                 with st.expander(think_label, expanded=False): # Keep closed in history for clean UI
-                    st.markdown(f'<div class="exp-think-content">', unsafe_allow_html=True)
-                    st.markdown(msg["meta"].get("thinking"))
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    # st.markdown(f'<div class="exp-think-content">', unsafe_allow_html=True)
+                    # st.markdown(msg["meta"].get("thinking"))
+                    # st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div class="exp-think-content">{msg["meta"].get("thinking")}</div>',
+                        unsafe_allow_html=True
+                    )
 
             # 2. RENDER THE ACTUAL ANSWER
             # Strip out raw <think> tags from history if they snuck through
@@ -613,62 +617,69 @@ def render_chat():
             if st.session_state.streaming:
                 thinking_display = st.empty()
                 response_container = st.empty()
-                full_text = ""
+                
+                full_stream = ""
                 is_error = False
                 citations_meta = {}
-                thinking_text = ""
                 think_duration = 0.0
                 stream_start_time = time.time()
 
-                for chunk, error, meta, thinking in stream_answer(
-                    user_input, st.session_state.conversation_id
-                ):
+                for chunk, error, meta, _ in stream_answer(user_input, st.session_state.conversation_id):
                     if error:
-                        full_text = chunk
+                        full_stream = chunk
                         is_error = True
                         break
                     if meta is not None:
                         citations_meta = meta
-                        if meta.get("thinking"):
-                            thinking_text = meta["thinking"]
-                    elif thinking is not None:
-                        think_duration = time.time() - stream_start_time
-                        clean_think = (
-                            thinking
-                            .replace("<think>", "")
-                            .replace("</think>", "")
-                            .strip()
-                        )
-                        thinking_text = clean_think
-                        thinking_display.markdown(
-                            f'<div class="live-think-block">🧠 <strong>Thinking ({think_duration:.1f}s)</strong><br><br>{clean_think}</div>',
-                            unsafe_allow_html=True
-                        )
-                    else:
-                        full_text += chunk
-                        response_container.markdown(
-                            full_text + '<span class="cur">▌</span>',
-                            unsafe_allow_html=True,
-                        )
+                        continue
 
-                response_container.markdown(full_text)
+                    full_stream += chunk
+                    think_duration = time.time() - stream_start_time
+
+                    # Live-parse the <think> tags to separate thoughts from answers
+                    if "<think>" in full_stream:
+                        if "</think>" in full_stream:
+                            # Thinking is done, rendering answer
+                            parts = full_stream.split("</think>")
+                            think_text = parts[0].replace("<think>", "").strip()
+                            ans_text = parts[1].strip()
+                            
+                            thinking_display.markdown(
+                                f'<div class="live-think-block">🧠 <strong>Reasoning Chain ({think_duration:.1f}s)</strong><br><br>{think_text}</div>',
+                                unsafe_allow_html=True
+                            )
+                            # Render the answer with the blinking cursor
+                            response_container.markdown(ans_text + '<span class="cur">▌</span>', unsafe_allow_html=True)
+                        else:
+                            # Still currently streaming thoughts
+                            think_text = full_stream.replace("<think>", "").strip()
+                            thinking_display.markdown(
+                                f'<div class="live-think-block">🧠 <strong>Thinking...</strong><br><br>{think_text}<span class="cur">▌</span></div>',
+                                unsafe_allow_html=True
+                            )
+                    else:
+                        # Fallback if no thinking tags exist
+                        response_container.markdown(full_stream + '<span class="cur">▌</span>', unsafe_allow_html=True)
+
+                # Final cleanup when streaming completes
+                clean_answer = full_stream.split("</think>")[-1].strip() if "</think>" in full_stream else full_stream
+                response_container.markdown(clean_answer)
 
                 if not is_error:
-                    final_thinking = thinking_text or citations_meta.get("thinking", "")
+                    final_think_text = full_stream.split("</think>")[0].replace("<think>", "").strip() if "</think>" in full_stream else ""
+                    # Override with metadata thinking if the backend provided a cleaner version
                     if citations_meta.get("thinking"):
-                        final_thinking = citations_meta["thinking"]
-                    meta_data = {
-                        "sources": citations_meta.get("sources", []),
-                        "thinking": final_thinking,
-                        "think_time": think_duration,
-                    }
-                    current_chat["messages"].append(
-                        {
-                            "role": "assistant",
-                            "content": full_text,
-                            "meta": meta_data,
+                        final_think_text = citations_meta["thinking"]
+                        
+                    current_chat["messages"].append({
+                        "role": "assistant",
+                        "content": clean_answer,
+                        "meta": {
+                            "sources": citations_meta.get("sources", []),
+                            "thinking": final_think_text,
+                            "think_time": think_duration,
                         }
-                    )
+                    })
                     save_chat_store(st.session_state.chat_store)
                 st.rerun()
 
