@@ -5,11 +5,9 @@ from functools import lru_cache
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.documents import Document
 
-from app.core.llm import get_llm, parse_thinking
+from app.core.llm import ollama_chat, parse_thinking
 from app.core.memory import ConversationMemory, session_manager
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -17,30 +15,41 @@ CHROMA_DIR = os.path.join(BASE_DIR, "chroma_db")
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
 
 PROMPT_TEMPLATE_WITH_MEMORY = """
-You are a research assistant helping analyze academic documents. Answer based on the provided context.
+You are a research assistant analyzing academic documents. Answer with precise citations.
 
-INSTRUCTIONS:
-1. If the answer is explicitly stated in the context, answer directly and cite the source with filename and page number.
-2. If the answer requires combining information across multiple documents or sections, synthesize them and cite each source used.
-3. If the answer is NOT explicitly stated but can be reasonably inferred from the context, first explain the relevant evidence from each source, then synthesize into a conclusion. Clearly distinguish inferred conclusions from directly stated facts. Do NOT stop at "the documents do not directly state..." if the evidence strongly supports a reasonable conclusion.
-4. Only say you don't have enough information if the context contains genuinely nothing relevant to the question.
-5. CRITICAL: You must use the evidence provided. If you have chunks from multiple documents, you MUST compare and synthesize them — do not describe each document in isolation and conclude nothing can be said.
+**CRITICAL INSTRUCTION – COMPARATIVE QUESTIONS:**
+When asked to compare/contrast two concepts (e.g., "How does X differ from Y?"):
+1. First extract what the documents say about X.
+2. Then extract what they say about Y.
+3. Synthesize the differences based on their described properties, even if no document explicitly states "X differs from Y by...".
+4. If a difference is clearly implied (e.g., X has component A, Y has component B instead), state it confidently but mark it as "inferred from the descriptions".
+5. Only say "not enough information" if the documents contain NO description of one of the concepts.
 
-Conversation Context (Previous Exchanges):
+**Example of good synthesis:**
+- Documents describe Transformer as having both encoder and decoder stacks.
+- Documents describe BERT as using only the encoder.
+- Answer: "According to the papers: The original Transformer (Attention is All You Need, p.2) uses both an encoder and decoder. BERT (BERT paper, p.2) uses only the encoder stack. This is the key architectural difference – BERT removes the decoder for pre-training tasks. (Note: The comparison is inferred from separate descriptions.)"
+
+**GROUNDING RULES:**
+- For directly stated facts: cite with filename and page.
+- For inferred comparisons: cite the sources used for each side and explicitly note "inferred".
+- Never invent properties not mentioned anywhere.
+
+Conversation Context:
 {memory_context}
 
-Document Context (Research Sources):
+Document Context:
 {document_context}
 
 Question:
 {question}
 
-Provide a well-reasoned answer, citing specific documents and page numbers where relevant:
+Provide a well-reasoned answer with inline citations in the format (filename.pdf, p.X). Use inferred statements where appropriate but clearly mark them.
 """
 
 # Retrieval tuning constants — adjust here, not scattered through code
 _CANDIDATE_POOL    = 40    # how many raw candidates to fetch from ChromaDB
-_FINAL_K           = 6     # how many chunks to pass to the LLM
+_FINAL_K           = 8     # how many chunks to pass to the LLM
 _MAX_PER_SOURCE    = 2     # max chunks allowed from any single document
 _SCORE_THRESHOLD   = 1.1   # L2 distance ceiling (lower = more relevant, 0 = perfect match)                           
                            # bypassing the per-source cap entirely. 1.1 lets the cap
@@ -210,55 +219,31 @@ def _extract_structured_sources(docs: List[Document]) -> List[dict]:
 
 def get_hybrid_rag_chain(conversation_id: str = None):
     """
-    Build the enhanced RAG chain with memory integration.
+    Kept for backward compatibility.
+    Returns (None, retriever) — callers should use ask_with_memory directly.
     """
     retriever = HybridRetriever(conversation_id=conversation_id)
-
-    def retrieve_hybrid(question: str) -> Dict:
-        docs, memory_exchanges = retriever.retrieve(question)
-        memory_context, doc_context = retriever.format_hybrid_context(docs, memory_exchanges)
-        return {
-            "memory_context": memory_context,
-            "document_context": doc_context,
-            "question": question
-        }
-
-    prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE_WITH_MEMORY)
-    llm = get_llm()
-
-    rag_chain = (
-        RunnableLambda(retrieve_hybrid)
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-
-    return rag_chain, retriever
+    return None, retriever
 
 
 def ask_with_memory(question: str, conversation_id: str) -> Dict:
     """
     Ask a question with conversation memory context.
+    Uses ollama_chat (direct /api/chat) so thinking tokens are captured.
     """
-    enhanced_question = f"Based on the documents, please answer: {question}"
-
     retriever = HybridRetriever(conversation_id=conversation_id)
     docs, memory_exchanges = retriever.retrieve(question)
     memory_context, doc_context = retriever.format_hybrid_context(docs, memory_exchanges)
 
-    prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE_WITH_MEMORY)
-    llm = get_llm()
-    chain = prompt | llm | StrOutputParser()
+    # Build the filled prompt string directly (no LangChain chain needed)
+    system_prompt = "You are a research assistant analyzing academic documents. Answer with precise citations."
+    user_message = PROMPT_TEMPLATE_WITH_MEMORY.format(
+        memory_context=memory_context,
+        document_context=doc_context,
+        question=f"Based on the documents, please answer: {question}",
+    )
 
-    raw = chain.invoke({
-        "memory_context": memory_context,
-        "document_context": doc_context,
-        "question": enhanced_question
-    })
-
-    # Strip <think>...</think> blocks so reasoning never leaks into the
-    # stored answer or memory — only the clean response is kept.
-    _, answer = parse_thinking(raw)
+    thinking, answer = ollama_chat(system_prompt, user_message)
 
     structured_sources = _extract_structured_sources(docs)
 
@@ -267,41 +252,40 @@ def ask_with_memory(question: str, conversation_id: str) -> Dict:
     memory_instance.add_exchange(question, answer, flat_sources)
 
     return {
-        "question": question,
-        "answer": answer,
-        "sources": structured_sources,
-        "conversation_id": conversation_id,
+        "question":              question,
+        "answer":                answer,
+        "thinking":              thinking,
+        "sources":               structured_sources,
+        "conversation_id":       conversation_id,
         "memory_exchanges_used": len(memory_exchanges),
-        "documents_used": len(docs)
+        "documents_used":        len(docs),
     }
 
 
 def ask_without_memory(question: str) -> Dict:
     """
     Ask a question WITHOUT memory (one-off questions).
+    Uses ollama_chat so thinking tokens are captured.
     """
     retriever = HybridRetriever(conversation_id=None)
     docs, _ = retriever.retrieve(question)
     memory_context, doc_context = retriever.format_hybrid_context(docs, [])
 
-    prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE_WITH_MEMORY)
-    llm = get_llm()
-    chain = prompt | llm | StrOutputParser()
+    system_prompt = "You are a research assistant analyzing academic documents. Answer with precise citations."
+    user_message = PROMPT_TEMPLATE_WITH_MEMORY.format(
+        memory_context=memory_context,
+        document_context=doc_context,
+        question=f"Based on the documents, please answer: {question}",
+    )
 
-    enhanced_question = f"Based on the documents, please answer: {question}"
-    raw = chain.invoke({
-        "memory_context": memory_context,
-        "document_context": doc_context,
-        "question": enhanced_question
-    })
-    _, answer = parse_thinking(raw)
-
+    thinking, answer = ollama_chat(system_prompt, user_message)
     structured_sources = _extract_structured_sources(docs)
 
     return {
         "question": question,
-        "answer": answer,
-        "sources": structured_sources
+        "answer":   answer,
+        "thinking": thinking,
+        "sources":  structured_sources,
     }
 
 

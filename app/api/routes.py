@@ -18,7 +18,7 @@ from app.core.rag import (
     _extract_structured_sources,   
     PROMPT_TEMPLATE_WITH_MEMORY,   
 )
-from app.core.llm import parse_thinking
+from app.core.llm import parse_thinking, ollama_chat_stream
 from app.core.memory import session_manager
 from app.core.ingestor import ingest, list_ingested_documents, delete_document, ingest_single_file
 
@@ -145,70 +145,63 @@ def ask_stream(request: QuestionRequest):
 
     def generate():
         try:
+            import json
+            from app.core.rag import PROMPT_TEMPLATE_WITH_MEMORY
+
             retriever = HybridRetriever(conversation_id=request.conversation_id)
             docs, memory_exchanges = retriever.retrieve(request.question)
             memory_context, doc_context = retriever.format_hybrid_context(docs, memory_exchanges)
 
-            from langchain_core.prompts import ChatPromptTemplate
-            from langchain_core.output_parsers import StrOutputParser
-            from app.core.llm import get_llm
-            import json
+            system_prompt = (
+                "You are a research assistant analyzing academic documents. "
+                "Answer with precise citations."
+            )
+            user_message = PROMPT_TEMPLATE_WITH_MEMORY.format(
+                memory_context=memory_context,
+                document_context=doc_context,
+                question=f"Based on the documents, please answer: {request.question}",
+            )
 
-            prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE_WITH_MEMORY)
-            llm = get_llm()
-            chain = prompt | llm | StrOutputParser()
+            # Collect both streams simultaneously
+            thinking_chunks = []
+            answer_chunks   = []
+            thinking_sent   = False  # sentinel emitted at most once
 
-            enhanced = f"Based on the documents, please answer: {request.question}"
-            chunks_collected = []
-            in_think_block = False
-            think_chunks = []
-
-            for chunk in chain.stream({
-                "memory_context": memory_context,
-                "document_context": doc_context,
-                "question": enhanced
-            }):
-                chunks_collected.append(chunk)
-
-                # Buffer the full output so far to detect think tags
-                so_far = "".join(chunks_collected)
-
-                if "<think>" in so_far and not in_think_block:
-                    in_think_block = True
-
-                if in_think_block:
-                    # Still inside thinking block — don't stream to user yet
-                    think_chunks.append(chunk)
-                    if "</think>" in so_far:
-                        # Thinking block closed — extract and send sentinel
-                        in_think_block = False
-                        _, answer_so_far = parse_thinking(so_far)
-                        # Send the thinking block as a sentinel so the frontend can display it
-                        yield f"||THINKING||{json.dumps(''.join(think_chunks))}"
-                        # Stream whatever answer text came after </think>
-                        if answer_so_far:
-                            yield answer_so_far
+            for tok_type, text in ollama_chat_stream(system_prompt, user_message):
+                if tok_type == "thinking":
+                    thinking_chunks.append(text)
+                    # Don't send individual thinking tokens yet —
+                    # wait until the thinking block finishes (answer starts)
                 else:
-                    yield chunk
+                    # First answer token — flush entire thinking block first
+                    if not thinking_sent and thinking_chunks:
+                        thinking_sent = True
+                        full_thinking = "".join(thinking_chunks)
+                        yield f"||THINKING||{json.dumps(full_thinking)}"
 
-            # After streaming, store in memory and send citations as sentinel
-            if chunks_collected:
-                full_raw = "".join(chunks_collected)
-                thinking_text, full_answer = parse_thinking(full_raw)
-                if request.conversation_id:
-                    memory = session_manager.get_or_create_session(request.conversation_id)
-                    flat_sources = [doc.metadata.get("source", "unknown") for doc in docs]
-                    # Store clean answer (no think tags) in memory
-                    memory.add_exchange(request.question, full_answer, flat_sources)
+                    answer_chunks.append(text)
+                    yield text
 
-                structured_sources = _extract_structured_sources(docs)
-                citations_payload = json.dumps({
-                    "sources": structured_sources,
-                    "memory_exchanges_used": len(memory_exchanges),
-                    "documents_used": len(docs),
-                    "thinking": thinking_text,
-                })
-                yield f"\n||CITATIONS||{citations_payload}"
+            # Edge case: answer was empty but thinking happened (shouldn't occur normally)
+            if not thinking_sent and thinking_chunks:
+                full_thinking = "".join(thinking_chunks)
+                yield f"||THINKING||{json.dumps(full_thinking)}"
+
+            # Store completed answer in memory and send citations sentinel
+            full_answer = "".join(answer_chunks)
+            if request.conversation_id and full_answer:
+                memory = session_manager.get_or_create_session(request.conversation_id)
+                flat_sources = [doc.metadata.get("source", "unknown") for doc in docs]
+                memory.add_exchange(request.question, full_answer, flat_sources)
+
+            structured_sources = _extract_structured_sources(docs)
+            citations_payload = json.dumps({
+                "sources":               structured_sources,
+                "memory_exchanges_used": len(memory_exchanges),
+                "documents_used":        len(docs),
+                "thinking":              "".join(thinking_chunks),
+            })
+            yield f"\n||CITATIONS||{citations_payload}"
 
         except Exception as e:
             yield f"ERROR: {str(e)}"

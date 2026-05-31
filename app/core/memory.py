@@ -11,9 +11,8 @@ from typing import List, Dict, Optional
 
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
-from langchain_core.prompts import ChatPromptTemplate
 
-from app.core.llm import get_llm
+from app.core.llm import ollama_chat
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHROMA_DIR = os.path.join(BASE_DIR, "chroma_db")
@@ -35,7 +34,6 @@ class ConversationMemory:
         """
         self.conversation_id = conversation_id
         self.vectorstore = self._get_or_create_memory_store()
-        self.llm = get_llm()
 
     def _get_or_create_memory_store(self):
         """Get or create ChromaDB collection for conversation memory."""
@@ -142,19 +140,17 @@ class ConversationMemory:
     def _summarize_conversation(self, conversation_text: str) -> str:
         """
         Summarize a long conversation to fit in context.
-        Uses the LLM to extract key points.
+        Calls ollama_chat directly — no LangChain chain needed.
         """
-        prompt = ChatPromptTemplate.from_template(
-            """Summarize this conversation in 3-4 bullet points, keeping key topics and facts:
-
-{conversation}
-
-Summary:"""
-        )
-
-        chain = prompt | self.llm
         try:
-            summary = chain.invoke({"conversation": conversation_text})
+            _, summary = ollama_chat(
+                system_prompt="You are a helpful assistant that summarizes conversations concisely.",
+                user_message=(
+                    "Summarize this conversation in 3-4 bullet points, "
+                    "keeping key topics and facts:\n\n"
+                    f"{conversation_text}\n\nSummary:"
+                ),
+            )
             return f"Conversation summary:\n{summary}"
         except Exception as e:
             print(f"Error summarizing conversation: {e}")
