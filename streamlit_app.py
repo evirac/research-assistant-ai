@@ -41,6 +41,11 @@ def init_session_state():
             create_new_chat()
     if "streaming" not in st.session_state:
         st.session_state.streaming = True
+    # Model state — seeded on first load from the backend
+    if "active_model" not in st.session_state:
+        st.session_state.active_model = None
+    if "available_models" not in st.session_state:
+        st.session_state.available_models = []
 
 
 def create_new_chat():
@@ -82,6 +87,19 @@ def api_post(endpoint: str, json_data: dict = None) -> dict:
         return {}
 
 
+def api_put(endpoint: str, json_data: dict = None) -> dict:
+    try:
+        resp = requests.put(
+            f"{st.session_state.api_base}{endpoint}",
+            json=json_data,
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception:
+        return {}
+
+
 def api_delete(endpoint: str) -> dict:
     try:
         resp = requests.delete(f"{st.session_state.api_base}{endpoint}", timeout=10)
@@ -89,6 +107,23 @@ def api_delete(endpoint: str) -> dict:
         return resp.json()
     except Exception:
         return {}
+
+
+def fetch_model_state():
+    """Fetch available models and current model from backend."""
+    data = api_get("/models")
+    if data:
+        st.session_state.available_models = data.get("models", [])
+        st.session_state.active_model = data.get("current_model")
+
+
+def switch_model(model_name: str):
+    """Send model switch request to backend."""
+    result = api_put("/models/current", {"model": model_name})
+    if result.get("status") == "success":
+        st.session_state.active_model = model_name
+        return True
+    return False
 
 
 def stream_answer(question: str, conversation_id: str):
@@ -172,7 +207,7 @@ def inject_custom_css():
     }
 
     /* ═══════════════════════════════════════════════════
-       SCROLLBARS (Sleek & Colorful)
+       SCROLLBARS
        ═══════════════════════════════════════════════════ */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #05050A; }
@@ -200,7 +235,7 @@ def inject_custom_css():
         font-weight: 700;
         letter-spacing: -0.03em;
     }
-    
+
     /* Neon New Chat Button */
     .sidebar-new-chat > button {
         background: linear-gradient(135deg, #FF2A6D 0%, #7B2CBF 100%);
@@ -232,15 +267,62 @@ def inject_custom_css():
     }
 
     /* ═══════════════════════════════════════════════════
-       UNIFIED CHAT BUTTONS (SPLIT BUTTON STYLE)
+       MODEL SELECTOR CARD
        ═══════════════════════════════════════════════════ */
-    /* The row wrapper acts as the single unified button body */
+    .model-card {
+        background: linear-gradient(135deg, rgba(123,44,191,0.12), rgba(5,217,232,0.06));
+        border: 1px solid #2A1F45;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 6px;
+    }
+    .model-badge {
+        display: inline-block;
+        background: linear-gradient(90deg, #7B2CBF, #05D9E8);
+        color: #FFFFFF;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+    }
+    .model-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #FFFFFF;
+        word-break: break-all;
+    }
+
+    /* Style the selectbox in the model section */
+    [data-testid="stSidebar"] .stSelectbox label {
+        font-size: 0.75rem;
+        color: #64748B;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+    [data-testid="stSidebar"] .stSelectbox > div > div {
+        background-color: #0E0E1A !important;
+        border: 1px solid #2A2A40 !important;
+        border-radius: 8px !important;
+        color: #E2E8F0 !important;
+        font-size: 0.85rem;
+    }
+    [data-testid="stSidebar"] .stSelectbox > div > div:focus-within {
+        border-color: #7B2CBF !important;
+        box-shadow: 0 0 0 1px #7B2CBF !important;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       UNIFIED CHAT BUTTONS
+       ═══════════════════════════════════════════════════ */
     [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
         background-color: #0E0E1A;
         border: 1px solid #1F1F33;
         border-radius: 8px;
         margin-bottom: 8px;
-        gap: 0 !important; /* Forces the elements flush together */
+        gap: 0 !important;
         align-items: stretch !important;
         overflow: hidden;
         transition: all 0.2s ease-in-out;
@@ -250,7 +332,6 @@ def inject_custom_css():
         box-shadow: 0 0 10px rgba(5, 217, 232, 0.15);
     }
 
-    /* Make the actual Streamlit buttons totally transparent */
     [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button {
         background-color: transparent !important;
         border: none !important;
@@ -261,7 +342,6 @@ def inject_custom_css():
         border-radius: 0 !important;
     }
 
-    /* Left Side (Chat Select) */
     [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:nth-child(1) button {
         justify-content: flex-start;
         padding-left: 12px !important;
@@ -272,7 +352,6 @@ def inject_custom_css():
         color: #FFFFFF !important;
     }
 
-    /* Right Side (Delete 🗑️) */
     [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:nth-child(2) {
         border-left: 1px solid #1F1F33;
         background-color: rgba(0, 0, 0, 0.2);
@@ -348,7 +427,6 @@ def inject_custom_css():
         border: 2px solid #05050A;
         box-shadow: 0 0 10px rgba(255,42,109,0.3);
     }
-    /* Make code blocks stand out */
     [data-testid="stChatMessage"] pre {
         background-color: #05050A; border: 1px solid #1F1F33; border-radius: 8px;
     }
@@ -357,7 +435,7 @@ def inject_custom_css():
     [data-testid="stChatMessage"] a:hover { color: #05D9E8; }
 
     /* ═══════════════════════════════════════════════════
-       EXPANDERS (Thinking & Sources Wrapper)
+       EXPANDERS
        ═══════════════════════════════════════════════════ */
     [data-testid="stExpander"] details {
         background-color: #0B0B14;
@@ -375,7 +453,7 @@ def inject_custom_css():
     [data-testid="stExpander"] summary:hover { background-color: #1A1A2E; }
 
     /* ═══════════════════════════════════════════════════
-       LIVE THINKING BLOCK & EXPANDER CONTENT
+       THINKING BLOCKS
        ═══════════════════════════════════════════════════ */
     .live-think-block, .exp-think-content {
         background: linear-gradient(90deg, rgba(255,42,109,0.05), transparent);
@@ -406,14 +484,14 @@ def inject_custom_css():
     }
     .src-card:hover { border-color: #05D9E8; background: linear-gradient(90deg, rgba(5,217,232,0.12), #121220); }
     .src-name { font-size: 0.85rem; font-weight: 700; color: #FFFFFF; }
-    .src-pg { 
-        font-size: 0.7rem; color: #05050A; font-weight: 700; 
-        background: #05D9E8; padding: 2px 6px; border-radius: 4px; margin-left: 8px; 
+    .src-pg {
+        font-size: 0.7rem; color: #05050A; font-weight: 700;
+        background: #05D9E8; padding: 2px 6px; border-radius: 4px; margin-left: 8px;
     }
     .src-prev { font-size: 0.8rem; color: #94A3B8; display: block; margin-top: 6px; border-top: 1px solid #1F1F33; padding-top: 6px; }
 
     /* ═══════════════════════════════════════════════════
-       CHAT INPUT FIELD
+       CHAT INPUT
        ═══════════════════════════════════════════════════ */
     [data-testid="stChatInput"] {
         background-color: #0A0A14;
@@ -428,7 +506,7 @@ def inject_custom_css():
     [data-testid="stChatInput"] textarea { color: #FFFFFF; font-size: 1rem; }
 
     /* ═══════════════════════════════════════════════════
-       TYPING CURSOR & SPINNERS
+       TYPING CURSOR
        ═══════════════════════════════════════════════════ */
     .cur {
         color: #05D9E8;
@@ -452,6 +530,83 @@ def check_api_connection() -> bool:
         return False
 
 
+def render_model_selector(online: bool):
+    """Render the model selector section in the sidebar."""
+    st.markdown('<p class="sb-label">🤖 Language Model</p>', unsafe_allow_html=True)
+
+    if not online:
+        st.markdown(
+            '<div class="model-card">'
+            '<div class="model-badge">OFFLINE</div><br>'
+            '<span class="dot-text">Connect backend to manage models</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    # Fetch model state once per session (or on first load)
+    if not st.session_state.available_models:
+        fetch_model_state()
+
+    available = st.session_state.available_models
+    current = st.session_state.active_model
+
+    if not available:
+        st.markdown(
+            '<div class="model-card">'
+            '<span class="dot-text">No models found. Pull one with:<br>'
+            '<code>ollama pull gemma4:12b</code></span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    # Show current model as a badge
+    if current:
+        st.markdown(
+            f'<div class="model-card">'
+            f'<div class="model-badge">ACTIVE</div>'
+            f'<div class="model-name">⚡ {current}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    # Selectbox for switching
+    current_idx = available.index(current) if current in available else 0
+    selected = st.selectbox(
+        "Switch model",
+        options=available,
+        index=current_idx,
+        key="model_selector",
+        label_visibility="collapsed",
+    )
+
+    # Detect change and call backend
+    if selected and selected != st.session_state.active_model:
+        with st.spinner(f"Switching to {selected}..."):
+            success = switch_model(selected)
+        if success:
+            st.success(f"✓ Now using **{selected}**", icon="🔄")
+            st.rerun()
+        else:
+            st.error("Failed to switch model. Is it pulled locally?")
+
+    # Refresh button
+    col_refresh, col_info = st.columns([1, 1])
+    with col_refresh:
+        if st.button("↻ Refresh", key="refresh_models", use_container_width=True):
+            fetch_model_state()
+            st.rerun()
+    with col_info:
+        # Small tip about pulling models
+        st.markdown(
+            '<span class="dot-text" style="font-size:0.7rem;">'
+            'Pull: <code>ollama pull &lt;model&gt;</code>'
+            '</span>',
+            unsafe_allow_html=True,
+        )
+
+
 def render_sidebar():
     with st.sidebar:
         st.markdown(
@@ -471,6 +626,11 @@ def render_sidebar():
         )
 
         st.markdown('<hr class="sb-sep">', unsafe_allow_html=True)
+
+        # ── Model Selector ────────────────────────────────────────────────────
+        render_model_selector(online)
+
+        st.markdown('<hr class="sb-sep">', unsafe_allow_html=True)
         st.markdown('<p class="sb-label">Conversations</p>', unsafe_allow_html=True)
 
         st.markdown('<div class="sidebar-new-chat">', unsafe_allow_html=True)
@@ -485,7 +645,6 @@ def render_sidebar():
             is_active = cid == st.session_state.conversation_id
             icon = "💬" if is_active else "🗨️"
 
-            # The CSS will now visually merge these columns into a single card
             col1, col2 = st.columns([0.85, 0.15])
             with col1:
                 if st.button(
@@ -496,7 +655,6 @@ def render_sidebar():
                     st.session_state.conversation_id = cid
                     st.rerun()
             with col2:
-                # Replaced the "x" with the 🗑️ emoji and removed the div wrapper
                 if st.button("🗑️", key=f"del_{cid}", help="Delete chat"):
                     del st.session_state.chat_store[cid]
                     save_chat_store(st.session_state.chat_store)
@@ -551,14 +709,17 @@ def render_chat():
     )
 
     if not messages:
+        # Show active model in the empty state
+        model_note = f"<br><span style='font-size:0.8rem; color:#7B2CBF;'>Model: {st.session_state.active_model or 'loading...'}</span>"
         st.markdown(
-            """
+            f"""
         <div class="empty-wrap">
             <div class="empty-icon">🧬</div>
             <p class="empty-h">Ready to analyze</p>
             <p class="empty-p">
                 Query your local documents. The assistant will retrieve evidence 
                 and construct answers securely on your hardware.
+                {model_note}
             </p>
         </div>
         """,
@@ -567,33 +728,31 @@ def render_chat():
 
     for msg in messages:
         with st.chat_message(msg["role"]):
-            
-            # 1. RENDER THINKING FIRST (If it exists)
+
             if msg["role"] == "assistant" and msg.get("meta") and msg["meta"].get("thinking"):
                 think_time = msg["meta"].get("think_time", 0)
                 think_label = f"🧠 Reasoning Chain ({think_time:.1f}s)" if think_time else "🧠 Reasoning Chain"
-                
-                with st.expander(think_label, expanded=False): # Keep closed in history for clean UI
-                    # st.markdown(f'<div class="exp-think-content">', unsafe_allow_html=True)
-                    # st.markdown(msg["meta"].get("thinking"))
-                    # st.markdown("</div>", unsafe_allow_html=True)
+
+                with st.expander(think_label, expanded=False):
                     st.markdown(
                         f'<div class="exp-think-content">{msg["meta"].get("thinking")}</div>',
                         unsafe_allow_html=True
                     )
 
-            # 2. RENDER THE ACTUAL ANSWER
-            # Strip out raw <think> tags from history if they snuck through
             clean_content = msg["content"]
             if "</think>" in clean_content:
                 clean_content = clean_content.split("</think>")[-1].strip()
-            
+
             st.markdown(clean_content)
 
-            # 3. RENDER SOURCES LAST (If they exist)
             if msg["role"] == "assistant" and msg.get("meta") and msg["meta"].get("sources"):
                 sources = msg["meta"].get("sources", [])
-                with st.expander(f"🔍 Retrieved Citations ({len(sources)})", expanded=False):
+                # Show model used if stored in meta
+                model_used = msg["meta"].get("model", "")
+                src_label = f"🔍 Retrieved Citations ({len(sources)})"
+                if model_used:
+                    src_label += f"  ·  {model_used}"
+                with st.expander(src_label, expanded=False):
                     for src in sources:
                         st.markdown(
                             f'<div class="src-card">'
@@ -617,7 +776,7 @@ def render_chat():
             if st.session_state.streaming:
                 thinking_display = st.empty()
                 response_container = st.empty()
-                
+
                 full_stream = ""
                 is_error = False
                 citations_meta = {}
@@ -636,41 +795,34 @@ def render_chat():
                     full_stream += chunk
                     think_duration = time.time() - stream_start_time
 
-                    # Live-parse the <think> tags to separate thoughts from answers
                     if "<think>" in full_stream:
                         if "</think>" in full_stream:
-                            # Thinking is done, rendering answer
                             parts = full_stream.split("</think>")
                             think_text = parts[0].replace("<think>", "").strip()
                             ans_text = parts[1].strip()
-                            
+
                             thinking_display.markdown(
                                 f'<div class="live-think-block">🧠 <strong>Reasoning Chain ({think_duration:.1f}s)</strong><br><br>{think_text}</div>',
                                 unsafe_allow_html=True
                             )
-                            # Render the answer with the blinking cursor
                             response_container.markdown(ans_text + '<span class="cur">▌</span>', unsafe_allow_html=True)
                         else:
-                            # Still currently streaming thoughts
                             think_text = full_stream.replace("<think>", "").strip()
                             thinking_display.markdown(
                                 f'<div class="live-think-block">🧠 <strong>Thinking...</strong><br><br>{think_text}<span class="cur">▌</span></div>',
                                 unsafe_allow_html=True
                             )
                     else:
-                        # Fallback if no thinking tags exist
                         response_container.markdown(full_stream + '<span class="cur">▌</span>', unsafe_allow_html=True)
 
-                # Final cleanup when streaming completes
                 clean_answer = full_stream.split("</think>")[-1].strip() if "</think>" in full_stream else full_stream
                 response_container.markdown(clean_answer)
 
                 if not is_error:
                     final_think_text = full_stream.split("</think>")[0].replace("<think>", "").strip() if "</think>" in full_stream else ""
-                    # Override with metadata thinking if the backend provided a cleaner version
                     if citations_meta.get("thinking"):
                         final_think_text = citations_meta["thinking"]
-                        
+
                     current_chat["messages"].append({
                         "role": "assistant",
                         "content": clean_answer,
@@ -678,6 +830,7 @@ def render_chat():
                             "sources": citations_meta.get("sources", []),
                             "thinking": final_think_text,
                             "think_time": think_duration,
+                            "model": citations_meta.get("model", st.session_state.active_model or ""),
                         }
                     })
                     save_chat_store(st.session_state.chat_store)
