@@ -79,7 +79,7 @@ class StreamingChunk(BaseModel):
 # HEALTH & STATUS ENDPOINTS
 # ============================================================================
 
-@app.get("/", tags=["Health"])
+@app.get("/health", tags=["Health"])
 def root():
     """Health check endpoint."""
     return {

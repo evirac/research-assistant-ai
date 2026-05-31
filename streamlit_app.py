@@ -158,365 +158,286 @@ def inject_custom_css():
        ═══════════════════════════════════════════════════ */
     #MainMenu { visibility: hidden; height: 0; }
     footer { visibility: hidden; height: 0; }
-    header {
-        background-color: transparent !important;
-    }
+    header { background-color: transparent !important; }
     [data-testid="stToolbar"] > div:nth-child(2),
-    [data-testid="stToolbar"] > div:nth-child(3) {
-        visibility: hidden;
-    }
+    [data-testid="stToolbar"] > div:nth-child(3) { visibility: hidden; }
 
     /* ═══════════════════════════════════════════════════
-       BASE
+       GLOBAL BASE (Neon Dark Theme)
        ═══════════════════════════════════════════════════ */
     .stApp {
-        background-color: #0c0c0c;
-        color: #e0ddd8;
+        background-color: #05050A;
+        color: #E2E8F0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     /* ═══════════════════════════════════════════════════
-       SCROLLBAR
+       SCROLLBARS (Sleek & Colorful)
        ═══════════════════════════════════════════════════ */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #444; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #05050A; }
+    ::-webkit-scrollbar-thumb { background: #2A2A40; border-radius: 4px; border: 2px solid #05050A; }
+    ::-webkit-scrollbar-thumb:hover { background: #FF2A6D; }
 
     /* ═══════════════════════════════════════════════════
        SIDEBAR
        ═══════════════════════════════════════════════════ */
     [data-testid="stSidebar"] {
-        background-color: #111111;
-        border-right: 1px solid #1e1e1e;
+        background-color: #0B0B14;
+        border-right: 1px solid #1A1A2E;
     }
     [data-testid="stSidebar"]::before {
         content: '';
         display: block;
-        height: 2px;
-        background: linear-gradient(90deg, #d4943a, #3ab89a, transparent);
-        margin-bottom: 12px;
+        height: 4px;
+        background: linear-gradient(90deg, #FF2A6D, #7B2CBF, #05D9E8);
+        margin-bottom: 15px;
+        box-shadow: 0 2px 10px rgba(255, 42, 109, 0.4);
     }
 
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3 {
-        color: #e0ddd8 !important;
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #FFFFFF !important;
+        font-weight: 700;
+        letter-spacing: -0.03em;
     }
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] div {
-        color: #a09a92;
-    }
-
-    /* New Chat button */
+    
+    /* Neon New Chat Button */
     .sidebar-new-chat > button {
-        background-color: rgba(212,148,58,0.10);
-        color: #d4943a;
-        border: 1px solid rgba(212,148,58,0.18);
-        border-radius: 6px;
+        background: linear-gradient(135deg, #FF2A6D 0%, #7B2CBF 100%);
+        color: #FFFFFF !important;
+        font-weight: 600;
+        border: none !important;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(255, 42, 109, 0.25);
+        transition: all 0.2s ease-in-out;
     }
     .sidebar-new-chat > button:hover {
-        background-color: rgba(212,148,58,0.20);
-        border-color: rgba(212,148,58,0.35);
+        box-shadow: 0 6px 20px rgba(255, 42, 109, 0.4);
+        transform: translateY(-2px);
     }
 
-    /* Chat list buttons */
-    [data-testid="stSidebar"] .stButton > button {
-        background-color: transparent;
-        color: #8a8480;
-        border: 1px solid transparent;
-        border-radius: 6px;
-        text-align: left;
-    }
-    [data-testid="stSidebar"] .stButton > button:hover {
-        background-color: #1a1a1a;
-        color: #e0ddd8;
-    }
-
-    /* ── DELETE BUTTON ── */
-    .sidebar-del,
-    .sidebar-del > div {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 100% !important;
-    }
-    /* target the actual button regardless of Streamlit wrapper depth */
-    .sidebar-del button {
-        background-color: transparent !important;
-        color: #3a3a3a !important;
-        border: none !important;
-        border-radius: 4px !important;
-        width: 22px !important;
-        height: 22px !important;
-        min-width: 22px !important;
-        max-width: 22px !important;
-        padding: 0 !important;
-        margin: 0 auto !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 0.8rem !important;
-        line-height: 1 !important;
-        transition: all 0.15s ease;
-    }
-    .sidebar-del button:hover {
-        color: #e05050 !important;
-        background-color: rgba(220,60,60,0.12) !important;
-    }
-
-    /* Ingest button */
+    /* Ingest Button */
     .sidebar-ingest > button {
-        background-color: rgba(58,184,154,0.08);
-        color: #3ab89a;
-        border: 1px solid rgba(58,184,154,0.25);
-        border-radius: 6px;
+        background: linear-gradient(135deg, #05D9E8 0%, #01A2B5 100%);
+        color: #05050A !important;
+        font-weight: 700;
+        border: none !important;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(5, 217, 232, 0.2);
+        transition: all 0.2s ease-in-out;
     }
     .sidebar-ingest > button:hover {
-        background-color: rgba(58,184,154,0.16);
+        box-shadow: 0 6px 20px rgba(5, 217, 232, 0.4);
+        transform: translateY(-2px);
     }
 
-    .sb-sep {
-        border: none;
-        height: 1px;
-        background: #1e1e1e;
-        margin: 14px 0;
+    /* ═══════════════════════════════════════════════════
+       UNIFIED CHAT BUTTONS (SPLIT BUTTON STYLE)
+       ═══════════════════════════════════════════════════ */
+    /* The row wrapper acts as the single unified button body */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
+        background-color: #0E0E1A;
+        border: 1px solid #1F1F33;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        gap: 0 !important; /* Forces the elements flush together */
+        align-items: stretch !important;
+        overflow: hidden;
+        transition: all 0.2s ease-in-out;
     }
-    .sb-label {
-        font-size: 0.65rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #555;
-        margin-bottom: 6px;
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:hover {
+        border-color: #05D9E8;
+        box-shadow: 0 0 10px rgba(5, 217, 232, 0.15);
     }
 
-    /* Status dot */
+    /* Make the actual Streamlit buttons totally transparent */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        height: 100% !important;
+        min-height: 42px !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    /* Left Side (Chat Select) */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:nth-child(1) button {
+        justify-content: flex-start;
+        padding-left: 12px !important;
+        color: #94A3B8 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:nth-child(1) button:hover {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Right Side (Delete 🗑️) */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:nth-child(2) {
+        border-left: 1px solid #1F1F33;
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:nth-child(2) button {
+        padding: 0 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem !important;
+        opacity: 0.6;
+        transition: all 0.2s;
+    }
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:nth-child(2) button:hover {
+        background-color: rgba(255, 42, 109, 0.2) !important;
+        opacity: 1;
+    }
+
+    /* Status Dot */
     .dot {
-        display: inline-block;
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        margin-right: 6px;
-        vertical-align: middle;
+        display: inline-block; width: 8px; height: 8px;
+        border-radius: 50%; margin-right: 8px; vertical-align: middle;
     }
-    .dot-on {
-        background: #3ad46a;
-        box-shadow: 0 0 6px rgba(58,212,106,0.5);
-        animation: dotpulse 2.5s ease-in-out infinite;
-    }
-    .dot-off {
-        background: #d43a3a;
-        box-shadow: 0 0 6px rgba(212,58,58,0.4);
-    }
-    @keyframes dotpulse {
-        0%,100% { box-shadow: 0 0 4px rgba(58,212,106,0.35); }
-        50%     { box-shadow: 0 0 12px rgba(58,212,106,0.7); }
-    }
-    .dot-text {
-        font-size: 0.72rem;
-        color: #555;
-        vertical-align: middle;
+    .dot-on { background: #00FF9D; box-shadow: 0 0 10px rgba(0,255,157,0.6); }
+    .dot-off { background: #FF2A6D; box-shadow: 0 0 10px rgba(255,42,109,0.6); }
+    .dot-text { font-size: 0.8rem; font-weight: 500; color: #94A3B8; vertical-align: middle; }
+
+    /* Labels & Dividers */
+    .sb-sep { border: none; height: 1px; background: #1A1A2E; margin: 20px 0; }
+    .sb-label {
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.15em; color: #64748B; margin-bottom: 12px;
     }
 
     /* Doc entries */
     .doc-row {
-        font-size: 0.78rem;
-        color: #777;
-        padding: 4px 0;
-        border-bottom: 1px solid #181818;
+        font-size: 0.8rem; color: #94A3B8; padding: 10px;
+        background-color: #10101C; border: 1px solid #1A1A2E;
+        border-radius: 8px; margin-bottom: 8px;
     }
-    .doc-row:last-child { border-bottom: none; }
 
     /* ═══════════════════════════════════════════════════
-       MAIN AREA
+       MAIN CHAT AREA
        ═══════════════════════════════════════════════════ */
     .main-hdr {
-        color: #e0ddd8;
-        font-size: 1.2rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        margin-bottom: 4px;
+        color: #FFFFFF; font-size: 1.8rem; font-weight: 800;
+        letter-spacing: -0.03em; margin-bottom: 6px;
     }
     .main-hdr-line {
-        height: 2px;
-        background: linear-gradient(90deg, #d4943a 0%, transparent 60%);
-        border-radius: 1px;
-        opacity: 0.5;
-        margin-bottom: 20px;
+        height: 3px; background: linear-gradient(90deg, #FF2A6D, transparent);
+        border-radius: 2px; opacity: 0.8; margin-bottom: 30px; width: 150px;
     }
 
-    .empty-wrap { text-align: center; padding: 60px 20px; }
-    .empty-icon { font-size: 2.2rem; opacity: 0.4; }
-    .empty-h {
-        color: #888; font-size: 1rem; font-weight: 600;
-        margin: 10px 0 6px 0;
-    }
-    .empty-p {
-        color: #555; font-size: 0.85rem; max-width: 360px;
-        margin: 0 auto; line-height: 1.55;
-    }
+    /* Empty State */
+    .empty-wrap { text-align: center; padding: 80px 20px; background: #0A0A14; border-radius: 16px; border: 1px dashed #1A1A2E; }
+    .empty-icon { font-size: 3rem; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(5,217,232,0.5)); }
+    .empty-h { color: #E2E8F0; font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+    .empty-p { color: #94A3B8; font-size: 0.95rem; max-width: 400px; margin: 0 auto; line-height: 1.6; }
 
     /* ═══════════════════════════════════════════════════
-       CHAT MESSAGES
+       CHAT BUBBLES & CARDS
        ═══════════════════════════════════════════════════ */
-    [data-testid="stChatMessage"] { background-color: transparent; }
+    [data-testid="stChatMessage"] {
+        background-color: #0E0E1A;
+        border: 1px solid #1F1F33;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
     [data-testid="stChatMessage"] div[data-testid="stAvatar"] {
-        background-color: #1a1a1a;
+        background: linear-gradient(135deg, #7B2CBF, #FF2A6D);
+        border: 2px solid #05050A;
+        box-shadow: 0 0 10px rgba(255,42,109,0.3);
     }
-    [data-testid="stChatMessage"] p { color: #d8d5d0; }
-    [data-testid="stChatMessage"] code {
-        background-color: #181818;
-        border: 1px solid #252525;
-        border-radius: 3px;
-        padding: 1px 5px;
-        color: #d4943a;
-    }
+    /* Make code blocks stand out */
     [data-testid="stChatMessage"] pre {
-        background-color: #111111;
-        border: 1px solid #222;
-        border-radius: 6px;
+        background-color: #05050A; border: 1px solid #1F1F33; border-radius: 8px;
     }
-    [data-testid="stChatMessage"] pre code {
-        background-color: transparent;
-        border: none;
-        padding: 0;
-        color: #d8d5d0;
-    }
-    [data-testid="stChatMessage"] strong { color: #f0ede8; }
-    [data-testid="stChatMessage"] a { color: #d4943a; }
-    [data-testid="stChatMessage"] li { color: #c8c4be; }
+    [data-testid="stChatMessage"] code { color: #05D9E8; background-color: rgba(5, 217, 232, 0.1); padding: 2px 6px; border-radius: 4px; }
+    [data-testid="stChatMessage"] a { color: #FF2A6D; text-decoration: none; font-weight: 600; }
+    [data-testid="stChatMessage"] a:hover { color: #05D9E8; }
 
     /* ═══════════════════════════════════════════════════
-       EXPANDERS
+       EXPANDERS (Thinking & Sources Wrapper)
        ═══════════════════════════════════════════════════ */
-    .streamlit-expanderHeader {
-        background-color: #161616;
-        border: 1px solid #222;
-        border-radius: 6px;
-        color: #999;
-        font-size: 0.8rem;
+    [data-testid="stExpander"] details {
+        background-color: #0B0B14;
+        border: 1px solid #1F1F33;
+        border-radius: 8px;
+        overflow: hidden;
     }
-    .streamlit-expanderHeader:hover {
-        border-color: #333;
-        color: #ccc;
-    }
-    [data-testid="stExpander"] details[open] .streamlit-expanderHeader {
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-        border-bottom-color: transparent;
-    }
-    .streamlit-expanderContent {
-        background-color: #161616;
-        border: 1px solid #222;
-        border-top: none;
-        border-bottom-left-radius: 6px;
-        border-bottom-right-radius: 6px;
-    }
-    .exp-think .streamlit-expanderHeader {
-        border-left: 3px solid #d4943a;
-    }
-    .exp-src .streamlit-expanderHeader {
-        border-left: 3px solid #3ab89a;
-    }
-    /* ═══════════════════════════════════════════════════
-       THINKING BLOCK (live + expander inner content)
-       ═══════════════════════════════════════════════════ */
-    /* Live thinking block shown while streaming */
-    .live-think-block {
-        background-color: #0f0f0f;
-        border: 1px solid #252525;
-        border-left: 3px solid #d4943a;
-        border-radius: 6px;
-        padding: 10px 14px;
-        margin-bottom: 10px;
-    }
-    .live-think-header {
-        font-size: 0.78rem;
+    [data-testid="stExpander"] summary {
+        background-color: #121220;
+        padding: 10px 15px;
+        color: #E2E8F0;
         font-weight: 600;
-        color: #d4943a;
-        margin-bottom: 8px;
-        letter-spacing: 0.02em;
+        border-bottom: 1px solid #1F1F33;
     }
-    .live-think-body {
-        color: #777;
-        font-size: 0.80rem;
+    [data-testid="stExpander"] summary:hover { background-color: #1A1A2E; }
+
+    /* ═══════════════════════════════════════════════════
+       LIVE THINKING BLOCK & EXPANDER CONTENT
+       ═══════════════════════════════════════════════════ */
+    .live-think-block, .exp-think-content {
+        background: linear-gradient(90deg, rgba(255,42,109,0.05), transparent);
+        border-left: 4px solid #FF2A6D;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 0 8px 8px 0;
+    }
+    .live-think-body, .exp-think-content p, .exp-think-content li {
+        color: #A0AEC0 !important;
+        font-size: 0.85rem;
         line-height: 1.6;
         font-style: italic;
     }
-    .live-think-body p { color: #777 !important; margin-bottom: 6px; }
-    .live-think-body strong { color: #999 !important; font-style: normal; }
-    .live-think-body ol, .live-think-body ul { padding-left: 18px; }
-    .live-think-body li { color: #777 !important; margin-bottom: 4px; }
-
-    /* Expander inner content for thinking (historical messages) */
-    .exp-think .streamlit-expanderContent p { color: #777; font-size: 0.82rem; }
-    .exp-think .streamlit-expanderContent strong { color: #999; }
-    .exp-think .streamlit-expanderContent li { color: #777; font-size: 0.82rem; }
-    .exp-think .streamlit-expanderContent ol,
-    .exp-think .streamlit-expanderContent ul { padding-left: 18px; }
-
-    .think-text {
-        color: #666;
-        font-style: italic;
-        font-size: 0.82rem;
-    }
-
-    .src-card {
-        background-color: #0f0f0f;
-        border: 1px solid #1e1e1e;
-        border-left: 3px solid #3ab89a;
-        border-radius: 5px;
-        padding: 8px 10px;
-        margin-bottom: 8px;
-    }
-    .src-card:last-child { margin-bottom: 0; }
-    .src-card:hover { border-left-color: #3ab89a; }
-    .src-name { font-size: 0.8rem; font-weight: 600; color: #ccc; }
-    .src-pg { font-size: 0.7rem; color: #3ab89a; font-weight: 500; margin-left: 6px; }
-    .src-prev {
-        font-size: 0.75rem; color: #555; font-style: italic;
-        display: block; margin-top: 3px;
-    }
+    .live-think-body strong { color: #FF2A6D !important; font-style: normal; }
 
     /* ═══════════════════════════════════════════════════
-       CHAT INPUT
+       SOURCE CARDS
+       ═══════════════════════════════════════════════════ */
+    .src-card {
+        background: linear-gradient(90deg, rgba(5,217,232,0.08), #0B0B14);
+        border: 1px solid #1F1F33;
+        border-left: 4px solid #05D9E8;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 10px;
+        transition: all 0.2s;
+    }
+    .src-card:hover { border-color: #05D9E8; background: linear-gradient(90deg, rgba(5,217,232,0.12), #121220); }
+    .src-name { font-size: 0.85rem; font-weight: 700; color: #FFFFFF; }
+    .src-pg { 
+        font-size: 0.7rem; color: #05050A; font-weight: 700; 
+        background: #05D9E8; padding: 2px 6px; border-radius: 4px; margin-left: 8px; 
+    }
+    .src-prev { font-size: 0.8rem; color: #94A3B8; display: block; margin-top: 6px; border-top: 1px solid #1F1F33; padding-top: 6px; }
+
+    /* ═══════════════════════════════════════════════════
+       CHAT INPUT FIELD
        ═══════════════════════════════════════════════════ */
     [data-testid="stChatInput"] {
-        background-color: #111111;
-        border: 1px solid #222;
-        border-radius: 10px;
+        background-color: #0A0A14;
+        border: 2px solid #1F1F33;
+        border-radius: 12px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
     }
     [data-testid="stChatInput"]:focus-within {
-        border-color: #d4943a;
-        box-shadow: 0 0 0 3px rgba(212,148,58,0.12);
+        border-color: #FF2A6D;
+        box-shadow: 0 0 15px rgba(255,42,109,0.3);
     }
-    [data-testid="stChatInput"] input,
-    [data-testid="stChatInput"] textarea { color: #e0ddd8; }
-    [data-testid="stChatInput"] input::placeholder { color: #444; }
+    [data-testid="stChatInput"] textarea { color: #FFFFFF; font-size: 1rem; }
 
     /* ═══════════════════════════════════════════════════
-       STREAMING CURSOR
+       TYPING CURSOR & SPINNERS
        ═══════════════════════════════════════════════════ */
     .cur {
-        color: #d4943a;
-        animation: curblink 0.7s steps(1) infinite;
+        color: #05D9E8;
+        text-shadow: 0 0 8px rgba(5,217,232,0.8);
+        animation: curblink 0.8s steps(1) infinite;
     }
-    @keyframes curblink {
-        0%,50% { opacity: 1; }
-        51%,100% { opacity: 0; }
-    }
+    @keyframes curblink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
 
-    /* ═══════════════════════════════════════════════════
-       SPINNER & ERROR
-       ═══════════════════════════════════════════════════ */
-    [data-testid="stSpinner"] > div { border-top-color: #d4943a; }
-    .stException {
-        background-color: rgba(212,58,58,0.08);
-        border: 1px solid rgba(212,58,58,0.25);
-        border-radius: 6px;
-        color: #f08080;
-    }
-    .stCaption { color: #555; }
+    [data-testid="stSpinner"] > div { border-top-color: #05D9E8; }
     </style>
     """,
         unsafe_allow_html=True,
@@ -534,7 +455,7 @@ def check_api_connection() -> bool:
 def render_sidebar():
     with st.sidebar:
         st.markdown(
-            '<div class="main-hdr" style="font-size:1.05rem; margin-bottom:2px;">'
+            '<div class="main-hdr" style="font-size:1.2rem; margin-bottom:2px;">'
             "🔬 Research Assistant</div>",
             unsafe_allow_html=True,
         )
@@ -542,10 +463,10 @@ def render_sidebar():
 
         online = check_api_connection()
         dot_cls = "dot-on" if online else "dot-off"
-        dot_label = "Backend connected" if online else "Backend offline"
+        dot_label = "Backend Connected" if online else "Backend Offline"
         st.markdown(
-            f'<span class="dot {dot_cls}"></span>'
-            f'<span class="dot-text">{dot_label}</span>',
+            f'<div style="margin-top: 10px;"><span class="dot {dot_cls}"></span>'
+            f'<span class="dot-text">{dot_label}</span></div>',
             unsafe_allow_html=True,
         )
 
@@ -564,7 +485,8 @@ def render_sidebar():
             is_active = cid == st.session_state.conversation_id
             icon = "💬" if is_active else "🗨️"
 
-            col1, col2 = st.columns([0.87, 0.13])
+            # The CSS will now visually merge these columns into a single card
+            col1, col2 = st.columns([0.85, 0.15])
             with col1:
                 if st.button(
                     f"{icon} {chat_data['title']}",
@@ -574,9 +496,8 @@ def render_sidebar():
                     st.session_state.conversation_id = cid
                     st.rerun()
             with col2:
-                st.markdown('<div class="sidebar-del">', unsafe_allow_html=True)
-                # Cleaner × character (U+00D7) instead of ✖ (U+2716)
-                if st.button("×", key=f"del_{cid}", help="Delete"):
+                # Replaced the "x" with the 🗑️ emoji and removed the div wrapper
+                if st.button("🗑️", key=f"del_{cid}", help="Delete chat"):
                     del st.session_state.chat_store[cid]
                     save_chat_store(st.session_state.chat_store)
                     api_delete(f"/conversations/{cid}")
@@ -588,7 +509,6 @@ def render_sidebar():
                         else:
                             create_new_chat()
                     st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown('<hr class="sb-sep">', unsafe_allow_html=True)
         st.markdown('<p class="sb-label">Knowledge Base</p>', unsafe_allow_html=True)
@@ -600,8 +520,8 @@ def render_sidebar():
             for doc in documents:
                 st.markdown(
                     f'<div class="doc-row">'
-                    f'📄 <strong style="color:#aaa;">{doc["filename"]}</strong>'
-                    f' — {doc["chunks"]} chunks</div>',
+                    f'📄 <strong style="color:#E2E8F0;">{doc["filename"]}</strong><br>'
+                    f'<span style="font-size:0.75rem;">{doc["chunks"]} chunks</span></div>',
                     unsafe_allow_html=True,
                 )
         else:
@@ -634,12 +554,11 @@ def render_chat():
         st.markdown(
             """
         <div class="empty-wrap">
-            <div class="empty-icon">🔬</div>
-            <p class="empty-h">Start a new inquiry</p>
+            <div class="empty-icon">🧬</div>
+            <p class="empty-h">Ready to analyze</p>
             <p class="empty-p">
-                Ask a question about your ingested documents and the
-                assistant will retrieve relevant evidence to construct
-                an answer.
+                Query your local documents. The assistant will retrieve evidence 
+                and construct answers securely on your hardware.
             </p>
         </div>
         """,
@@ -648,42 +567,40 @@ def render_chat():
 
     for msg in messages:
         with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+            
+            # 1. RENDER THINKING FIRST (If it exists)
+            if msg["role"] == "assistant" and msg.get("meta") and msg["meta"].get("thinking"):
+                think_time = msg["meta"].get("think_time", 0)
+                think_label = f"🧠 Reasoning Chain ({think_time:.1f}s)" if think_time else "🧠 Reasoning Chain"
+                
+                with st.expander(think_label, expanded=False): # Keep closed in history for clean UI
+                    st.markdown(f'<div class="exp-think-content">', unsafe_allow_html=True)
+                    st.markdown(msg["meta"].get("thinking"))
+                    st.markdown("</div>", unsafe_allow_html=True)
 
-            if msg["role"] == "assistant" and msg.get("meta"):
-                meta = msg["meta"]
-                thinking = meta.get("thinking", "")
-                sources = meta.get("sources", [])
+            # 2. RENDER THE ACTUAL ANSWER
+            # Strip out raw <think> tags from history if they snuck through
+            clean_content = msg["content"]
+            if "</think>" in clean_content:
+                clean_content = clean_content.split("</think>")[-1].strip()
+            
+            st.markdown(clean_content)
 
-                if thinking:
-                    think_time = msg.get("meta", {}).get("think_time", 0)
-                    think_label = (
-                        f"🧠 Thought for {think_time:.1f}s"
-                        if think_time
-                        else "🧠 Reasoning Trace"
-                    )
-                    with st.expander(think_label, expanded=True):
+            # 3. RENDER SOURCES LAST (If they exist)
+            if msg["role"] == "assistant" and msg.get("meta") and msg["meta"].get("sources"):
+                sources = msg["meta"].get("sources", [])
+                with st.expander(f"🔍 Retrieved Citations ({len(sources)})", expanded=False):
+                    for src in sources:
                         st.markdown(
-                            f'<div class="live-think-body">', unsafe_allow_html=True
+                            f'<div class="src-card">'
+                            f'<span class="src-name">{src.get("file", "Unknown")}</span>'
+                            f'<span class="src-pg">PG {src.get("page", "?")}</span>'
+                            f'<span class="src-prev">"{src.get("preview", "")}"</span>'
+                            f'</div>',
+                            unsafe_allow_html=True,
                         )
-                        st.markdown(thinking)
-                        st.markdown("</div>", unsafe_allow_html=True)
 
-                if sources:
-                    with st.expander(
-                        f"🔍 Retrieved Evidence ({len(sources)})", expanded=False
-                    ):
-                        for src in sources:
-                            st.markdown(
-                                f'<div class="src-card">'
-                                f'<span class="src-name">{src.get("file", "Unknown")}</span>'
-                                f'<span class="src-pg">p. {src.get("page", "?")}</span>'
-                                f'<span class="src-prev">"{src.get("preview", "")}"</span>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
-
-    user_input = st.chat_input("Ask a question about your documents...")
+    user_input = st.chat_input("Query your knowledge base...")
 
     if user_input:
         current_chat["messages"].append({"role": "user", "content": user_input})
@@ -715,9 +632,7 @@ def render_chat():
                         if meta.get("thinking"):
                             thinking_text = meta["thinking"]
                     elif thinking is not None:
-                        # Thinking block just arrived — record elapsed time & render it live
                         think_duration = time.time() - stream_start_time
-                        # Strip raw <think></think> wrapper tags if present
                         clean_think = (
                             thinking
                             .replace("<think>", "")
@@ -725,10 +640,9 @@ def render_chat():
                             .strip()
                         )
                         thinking_text = clean_think
-                        # Render thinking as proper markdown (bullets, bold etc. all work)
                         thinking_display.markdown(
-                            f"🧠 **Thought for {think_duration:.1f}s**\n\n"
-                            + clean_think
+                            f'<div class="live-think-block">🧠 <strong>Thinking ({think_duration:.1f}s)</strong><br><br>{clean_think}</div>',
+                            unsafe_allow_html=True
                         )
                     else:
                         full_text += chunk
@@ -741,7 +655,6 @@ def render_chat():
 
                 if not is_error:
                     final_thinking = thinking_text or citations_meta.get("thinking", "")
-                    # Prefer the clean version from citations payload (tags already stripped)
                     if citations_meta.get("thinking"):
                         final_thinking = citations_meta["thinking"]
                     meta_data = {
