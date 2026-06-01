@@ -15,6 +15,14 @@
 
 ---
 
+## 📽️ Demo
+
+<video controls width="800">
+    <source src="demo.mp4" type="video/mp4">
+</video>
+
+---
+
 ## What is this?
 
 Research Assistant AI is a **Retrieval-Augmented Generation (RAG)** pipeline that lets you have multi-turn conversations with your own PDF library — entirely on your local hardware. Drop academic papers into a folder, ingest them once, and then query them with natural language. The assistant retrieves the most relevant passages, reasons over them, and answers with precise inline citations showing which document and page each claim comes from.
