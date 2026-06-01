@@ -11,19 +11,13 @@
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-orange?style=for-the-badge)](https://www.trychroma.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-*Your documents never leave your machine. No API keys. No cloud. Just your GPU.*
-
 </div>
 
 ---
 
 ## 📽️ Demo
 
-<!-- Replace the line below with your actual GitHub-hosted demo video/gif -->
-> 🎬 **[Watch the full demo video →](YOUR_VIDEO_LINK_HERE)**
-
-<!-- Tip: Record with OBS, compress to a GIF with ezgif.com, then drag-drop into a GitHub issue to host it.
-     Then paste the raw URL here as: ![Demo](https://user-images.githubusercontent.com/YOUR_ASSET_URL.gif) -->
+> 🎬 **[Watch the full demo video →](demo.mp4)**
 
 ---
 
@@ -122,7 +116,7 @@ Everything runs locally: the LLM via [Ollama](https://ollama.com), the vector da
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/research-assistant-ai.git
+git clone https://github.com/evirac/research-assistant-ai.git
 cd research-assistant-ai
 pip install -r requirements.txt
 ```

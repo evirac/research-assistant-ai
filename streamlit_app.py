@@ -39,6 +39,12 @@ def init_session_state():
             st.session_state.conversation_id = list(st.session_state.chat_store.keys())[-1]
         else:
             create_new_chat()
+    elif st.session_state.conversation_id not in st.session_state.chat_store:
+        # ID is set but the entry was deleted (e.g. all chats wiped) — resync.
+        if st.session_state.chat_store:
+            st.session_state.conversation_id = list(st.session_state.chat_store.keys())[-1]
+        else:
+            create_new_chat()
     if "streaming" not in st.session_state:
         st.session_state.streaming = True
     # Model state — seeded on first load from the backend
@@ -699,6 +705,10 @@ def render_sidebar():
 
 
 def render_chat():
+    # Guard: conversation_id may point to a just-deleted session on re-render
+    if st.session_state.conversation_id not in st.session_state.chat_store:
+        create_new_chat()
+
     current_chat = st.session_state.chat_store[st.session_state.conversation_id]
     messages = current_chat["messages"]
 
