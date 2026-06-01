@@ -17,7 +17,9 @@
 
 ## 📽️ Demo
 
-> 🎬 **[Watch the full demo video →](demo.mp4)**
+<video controls width="800">
+    <source src="demo.mp4" type="video/mp4">
+</video>
 
 ---
 
